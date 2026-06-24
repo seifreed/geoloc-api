@@ -1,0 +1,32 @@
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: geoloc
+      MARIADB_USER: geo
+      MARIADB_PASSWORD: ${DB_PASS:-geo}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASS:-root}
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect"]
+      interval: 5s
+      retries: 10
+    ports: ["127.0.0.1::3306"]   # puerto dinámico, solo localhost. Ver: docker compose port db 3306
+
+  api:
+    build: .
+    environment:
+      DB_HOST: db
+      DB_USER: geo
+      DB_PASS: ${DB_PASS:-geo}
+      DB_NAME: geoloc
+      API_KEY: ${API_KEY:-}   # si se define en .env, la API exige header X-API-Key
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: ["127.0.0.1::8000"]   # puerto dinámico, solo localhost. Ver: docker compose port api 8000
+
+volumes:
+  dbdata:

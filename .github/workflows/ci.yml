@@ -1,0 +1,20 @@
+name: CI
+on: [push, pull_request]
+
+permissions:
+  contents: read   # mínimo privilegio para el GITHUB_TOKEN
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # actions pineadas a SHA (no a tags movibles) — cadena de suministro
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.14"
+      - run: pip install '.[dev]'
+      - run: python -m ruff check .
+      - run: python -m mypy app load.py
+      - run: python -m bandit -q -r app load.py
+      - run: python -m pytest -q
